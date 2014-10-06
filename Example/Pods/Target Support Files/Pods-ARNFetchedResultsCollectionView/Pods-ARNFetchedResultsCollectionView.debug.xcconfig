@@ -1,0 +1,5 @@
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1
+HEADER_SEARCH_PATHS = "${PODS_ROOT}/Headers/Public" "${PODS_ROOT}/Headers/Public/ARNFetchedResultsCollectionView" "${PODS_ROOT}/Headers/Public/ARNFetchedResultsController" "${PODS_ROOT}/Headers/Public/Expecta" "${PODS_ROOT}/Headers/Public/Expecta+Snapshots" "${PODS_ROOT}/Headers/Public/FBSnapshotTestCase" "${PODS_ROOT}/Headers/Public/Specta"
+OTHER_CFLAGS = $(inherited) -isystem "${PODS_ROOT}/Headers/Public" -isystem "${PODS_ROOT}/Headers/Public/ARNFetchedResultsCollectionView" -isystem "${PODS_ROOT}/Headers/Public/ARNFetchedResultsController" -isystem "${PODS_ROOT}/Headers/Public/Expecta" -isystem "${PODS_ROOT}/Headers/Public/Expecta+Snapshots" -isystem "${PODS_ROOT}/Headers/Public/FBSnapshotTestCase" -isystem "${PODS_ROOT}/Headers/Public/Specta"
+OTHER_LDFLAGS = -ObjC -l"Pods-ARNFetchedResultsCollectionView-ARNFetchedResultsCollectionView" -l"Pods-ARNFetchedResultsCollectionView-ARNFetchedResultsController" -framework "CoreData"
+PODS_ROOT = ${SRCROOT}/Pods
