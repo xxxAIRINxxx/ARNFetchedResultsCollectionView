@@ -21,6 +21,10 @@ it, simply add the following line to your Podfile:
 
     pod "ARNFetchedResultsCollectionView"
 
+## Dependency
+
+[ARNFetchedResultsController](https://github.com/xxxAIRINxxx/ARNFetchedResultsController)
+
 ## License
 
 ARNFetchedResultsCollectionView is available under the MIT license. See the LICENSE file for more info.

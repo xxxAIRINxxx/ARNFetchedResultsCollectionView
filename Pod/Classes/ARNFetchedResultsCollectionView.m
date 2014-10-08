@@ -1,5 +1,11 @@
 
-//  Copyright (c) 2013 Airin. All rights reserved.
+//
+//  ARNFetchedResultsCollectionView.m
+//  ARNFetchedResultsCollectionView
+//
+//  Created by Airin on 10/06/2014.
+//  Copyright (c) 2014 Airin. All rights reserved.
+//
 
 #import "ARNFetchedResultsCollectionView.h"
 

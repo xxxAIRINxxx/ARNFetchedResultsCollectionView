@@ -1,5 +1,11 @@
 
-//  Copyright (c) 2013 Airin. All rights reserved.
+//
+//  ARNFetchedResultsCollectionView.h
+//  ARNFetchedResultsCollectionView
+//
+//  Created by Airin on 10/06/2014.
+//  Copyright (c) 2014 Airin. All rights reserved.
+//
 // c.f. https://github.com/AshFurrow/UICollectionView-NSFetchedResultsController
 
 @import CoreData;
