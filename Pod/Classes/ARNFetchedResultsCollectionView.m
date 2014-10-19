@@ -68,14 +68,10 @@
                 break;
                 
             case NSFetchedResultsChangeDelete:
-                //LOG(@"indexPath : %@", indexPath);
-                //LOG(@"newIndexPath : %@", newIndexPath);
                 change[@(type)] = indexPath;
                 break;
                 
             case NSFetchedResultsChangeUpdate: {
-                //LOG(@"indexPath : %@", indexPath);
-                //LOG(@"newIndexPath : %@", newIndexPath);
                 if (!newIndexPath) {
                     change[@(type)] = @[indexPath];
                 }
@@ -153,9 +149,9 @@
     };
 }
 
-- (instancetype)initWithFrame:(CGRect)frame
+- (instancetype)initWithFrame:(CGRect)frame collectionViewLayout:(UICollectionViewLayout *)layout
 {
-    if (!(self = [super initWithFrame:frame])) { return nil; }
+    if (!(self = [super initWithFrame:frame collectionViewLayout:layout])) { return nil; }
     
     [self commonInit];
     
