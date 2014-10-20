@@ -8,10 +8,10 @@
 
 @import CoreData;
 
-typedef void (^AFRWillChangeContentBlock)();
+typedef void (^AFRWillChangeContentBlock)(NSFetchedResultsController *frController);
 typedef void (^AFRDidChangeSectionBlock)(id <NSFetchedResultsSectionInfo> sectionInfo, NSFetchedResultsChangeType type, NSUInteger sectionIndex);
 typedef void (^AFRDidChangeObjectBlock)(id anObject, NSFetchedResultsChangeType type, NSIndexPath *indexPath, NSIndexPath *newIndexPath);
-typedef void (^AFRDidChangeContentBlock)();
+typedef void (^AFRDidChangeContentBlock)(NSFetchedResultsController *frController);
 
 @interface ARNFetchedResultsController : NSObject <NSFetchedResultsControllerDelegate>
 

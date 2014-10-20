@@ -8,6 +8,10 @@
 
 #import "ARNFetchedResultsController.h"
 
+#if !__has_feature(objc_arc)
+#error This file must be compiled with ARC. Use -fobjc-arc flag (or convert project to ARC).
+#endif
+
 @interface ARNFetchedResultsController ()
 
 @property (nonatomic, strong) NSFetchedResultsController *fetchedResultsController;
@@ -108,7 +112,7 @@
     if (self.fetchedResultsController != controller) { return; }
     
     if (self.willChangeContentBlock) {
-        self.willChangeContentBlock();
+        self.willChangeContentBlock(controller);
     }
 }
 
@@ -142,7 +146,7 @@
     if (_fetchedResultsController != controller) { return; }
     
     if (self.didChangeContentBlock) {
-        self.didChangeContentBlock();
+        self.didChangeContentBlock(controller);
     }
 }
 

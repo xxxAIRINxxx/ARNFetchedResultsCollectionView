@@ -1,4 +1,3 @@
-
 //
 //  ARNFetchedResultsCollectionView.m
 //  ARNFetchedResultsCollectionView
@@ -19,14 +18,20 @@
 
 @property (nonatomic, strong) ARNFetchedResultsController *fetchedResultsController;
 
-@property (nonatomic, strong) NSMutableArray *sectionChanges;
-@property (nonatomic, strong) NSMutableArray *objectChanges;
+@property (nonatomic, strong) NSBlockOperation *blockOperation;
+
+@property (nonatomic, assign) BOOL shouldReloadCollectionView;
 
 @end
 
 @implementation ARNFetchedResultsCollectionView
 
 - (void)dealloc
+{
+    [self disConnect];
+}
+
+- (void)disConnect
 {
     [_fetchedResultsController disConnect];
 }
@@ -35,117 +40,99 @@
 {
     self.fetchedResultsController = [[ARNFetchedResultsController alloc] init];
     
-    self.sectionChanges = [NSMutableArray array];
-    self.objectChanges = [NSMutableArray array];
-    
     __weak typeof(self) weakSelf = self;
+    
+    self.fetchedResultsController.willChangeContentBlock = ^(NSFetchedResultsController *frController) {
+        weakSelf.blockOperation = [[NSBlockOperation alloc] init];
+        weakSelf.shouldReloadCollectionView = NO;
+    };
     
     self.fetchedResultsController.didChangeSectionBlock = ^(id <NSFetchedResultsSectionInfo> sectionInfo, NSFetchedResultsChangeType type, NSUInteger sectionIndex){
         
         if (!weakSelf) { return; }
         
-        NSMutableDictionary *change = [NSMutableDictionary new];
         switch (type) {
-            case NSFetchedResultsChangeInsert:
-                change[@(type)] = @(sectionIndex);
+            case NSFetchedResultsChangeInsert: {
+                [weakSelf.blockOperation addExecutionBlock:^{
+                    [weakSelf insertSections:[NSIndexSet indexSetWithIndex:sectionIndex]];
+                }];
                 break;
-            case NSFetchedResultsChangeDelete:
-                change[@(type)] = @(sectionIndex);
+            }
+            case NSFetchedResultsChangeDelete: {
+                [weakSelf.blockOperation addExecutionBlock:^{
+                    [weakSelf deleteSections:[NSIndexSet indexSetWithIndex:sectionIndex]];
+                }];
                 break;
+            }
+            case NSFetchedResultsChangeUpdate: {
+                [weakSelf.blockOperation addExecutionBlock:^{
+                    [weakSelf reloadSections:[NSIndexSet indexSetWithIndex:sectionIndex]];
+                }];
+                break;
+            }
             default:
                 break;
         }
-        [weakSelf.sectionChanges addObject:change];
     };
     
     self.fetchedResultsController.didChangeObjectBlock = ^(id anObject, NSFetchedResultsChangeType type, NSIndexPath *indexPath, NSIndexPath *newIndexPath) {
         if (!weakSelf) { return; }
         
-        NSMutableDictionary *change = [NSMutableDictionary new];
         switch (type) {
-            case NSFetchedResultsChangeInsert:
-                change[@(type)] = newIndexPath;
-                break;
-                
-            case NSFetchedResultsChangeDelete:
-                change[@(type)] = indexPath;
-                break;
-                
-            case NSFetchedResultsChangeUpdate: {
-                if (!newIndexPath) {
-                    change[@(type)] = @[indexPath];
+            case NSFetchedResultsChangeInsert: {
+                if ([weakSelf numberOfSections] > 0) {
+                    if ([weakSelf numberOfItemsInSection:indexPath.section] == 0) {
+                        weakSelf.shouldReloadCollectionView = YES;
+                    } else {
+                        [weakSelf.blockOperation addExecutionBlock:^{
+                            [weakSelf insertItemsAtIndexPaths:@[newIndexPath]];
+                        }];
+                    }
+                } else {
+                    weakSelf.shouldReloadCollectionView = YES;
                 }
-                else {
-                    change[@(NSFetchedResultsChangeDelete)] = @[indexPath];
-                    change[@(NSFetchedResultsChangeInsert)] = @[newIndexPath];
+                break;
+            }
+            case NSFetchedResultsChangeDelete: {
+                if ([weakSelf numberOfItemsInSection:indexPath.section] == 1) {
+                    weakSelf.shouldReloadCollectionView = YES;
+                } else {
+                    [weakSelf.blockOperation addExecutionBlock:^{
+                        [weakSelf deleteItemsAtIndexPaths:@[indexPath]];
+                    }];
                 }
                 break;
             }
                 
-            case NSFetchedResultsChangeMove:
-                change[@(type)] = @[indexPath, newIndexPath];
+            case NSFetchedResultsChangeUpdate: {
+                [weakSelf.blockOperation addExecutionBlock:^{
+                    [weakSelf reloadItemsAtIndexPaths:@[indexPath]];
+                }];
                 break;
+            }
+                
+            case NSFetchedResultsChangeMove: {
+                [weakSelf.blockOperation addExecutionBlock:^{
+                    [weakSelf deleteItemsAtIndexPaths:@[indexPath]];
+                    [weakSelf insertItemsAtIndexPaths:@[newIndexPath]];
+                }];
+                break;
+            }
             default:
                 break;
         }
     };
     
-    self.fetchedResultsController.didChangeContentBlock = ^{
+    self.fetchedResultsController.didChangeContentBlock = ^(NSFetchedResultsController *frController){
         if (!weakSelf) { return; }
         
-        if ([weakSelf.sectionChanges count] > 0) {
+        if (weakSelf.shouldReloadCollectionView) {
+            [weakSelf reloadData];
+        } else {
             [weakSelf performBatchUpdates:^{
-                for (NSDictionary *change in weakSelf.sectionChanges) {
-                    [change enumerateKeysAndObjectsUsingBlock:^(NSNumber *key, id obj, BOOL *stop){
-                        NSFetchedResultsChangeType type = [key unsignedIntegerValue];
-                        switch (type) {
-                            case NSFetchedResultsChangeInsert:
-                                [weakSelf insertSections:[NSIndexSet indexSetWithIndex:[obj unsignedIntegerValue]]];
-                                break;
-                            case NSFetchedResultsChangeDelete:
-                                [weakSelf deleteSections:[NSIndexSet indexSetWithIndex:[obj unsignedIntegerValue]]];
-                                break;
-                            default:
-                                break;
-                        }
-                    }];
-                }
+                [weakSelf.blockOperation start];
             } completion:nil];
         }
-        
-        if ([weakSelf.objectChanges count] > 0 && ![weakSelf.sectionChanges count]) {
-            // UICollectionViewにバグがあるための対応らしい
-            if ([weakSelf shouldReloadCollectionViewToPreventKnowIssue] || !weakSelf.window) {
-                [weakSelf reloadData];
-            } else {
-                [weakSelf performBatchUpdates:^{
-                    for (NSDictionary *change in weakSelf.objectChanges) {
-                        [change enumerateKeysAndObjectsUsingBlock:^(NSNumber *key, id obj, BOOL *stop){
-                            NSFetchedResultsChangeType type = [key unsignedIntegerValue];
-                            switch (type) {
-                                case NSFetchedResultsChangeInsert:
-                                    [weakSelf insertItemsAtIndexPaths:@[obj]];
-                                    break;
-                                    
-                                case NSFetchedResultsChangeDelete:
-                                    [weakSelf deleteItemsAtIndexPaths:@[obj]];
-                                    break;
-                                    
-                                case NSFetchedResultsChangeUpdate:
-                                    [weakSelf reloadItemsAtIndexPaths:@[obj]];
-                                    break;
-                                case NSFetchedResultsChangeMove:
-                                    [weakSelf moveItemAtIndexPath:obj[0] toIndexPath:obj[1]];
-                                    break;
-                            }
-                        }];
-                    }
-                } completion:nil];
-            }
-        }
-        
-        [weakSelf.sectionChanges removeAllObjects];
-        [weakSelf.objectChanges removeAllObjects];
     };
 }
 
@@ -165,41 +152,6 @@
     [self commonInit];
     
     return self;
-}
-
-- (BOOL)shouldReloadCollectionViewToPreventKnowIssue
-{
-    __block BOOL shouldReload = NO;
-    for (NSDictionary *change in self.objectChanges) {
-        [change enumerateKeysAndObjectsUsingBlock:^(NSNumber *key, id obj, BOOL *stop){
-            NSFetchedResultsChangeType type = [key unsignedIntegerValue];
-            NSIndexPath *indexPath = obj;
-            switch (type) {
-                case NSFetchedResultsChangeInsert:
-                    if ([self numberOfItemsInSection:indexPath.section] == 0) {
-                        shouldReload = YES;
-                    } else {
-                        shouldReload = NO;
-                    }
-                    break;
-                case NSFetchedResultsChangeDelete:
-                    if ([self numberOfItemsInSection:indexPath.section] == 1) {
-                        shouldReload = YES;
-                    } else {
-                        shouldReload = NO;
-                    }
-                    break;
-                case NSFetchedResultsChangeUpdate:
-                    shouldReload = NO;
-                    break;
-                case NSFetchedResultsChangeMove:
-                    shouldReload = NO;
-                    break;
-            }
-        }];
-    }
-    
-    return shouldReload;
 }
 
 - (void)performFetchWithContext:(NSManagedObjectContext *)context

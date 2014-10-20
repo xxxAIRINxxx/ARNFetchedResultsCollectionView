@@ -1,4 +1,3 @@
-
 //
 //  ARNFetchedResultsCollectionView.h
 //  ARNFetchedResultsCollectionView
@@ -6,7 +5,7 @@
 //  Created by Airin on 10/06/2014.
 //  Copyright (c) 2014 Airin. All rights reserved.
 //
-// c.f. https://github.com/AshFurrow/UICollectionView-NSFetchedResultsController
+// @see https://github.com/AshFurrow/UICollectionView-NSFetchedResultsController/issues/13
 
 @import CoreData;
 
@@ -17,6 +16,8 @@
              sectionNameKeyPath:(NSString *)keyPath
                      fetchLimit:(int)fetchLimit
                       cacheName:(NSString *)cacheName;
+
+- (void)disConnect;
 
 - (NSArray *)fetchObjects;
 - (NSInteger)sectionCount;
